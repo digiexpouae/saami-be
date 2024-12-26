@@ -51,10 +51,37 @@ class UserController {
     async deleteUser(req, res) {
         try {
             const userId = req.params.id;
-            await UserService.deleteUser(userId);
-            return handleResponse(res, 200, 'User deleted successfully');
+            const deletedUser = await UserService.deleteUser(userId);
+            return handleResponse(res, 200, 'User deleted successfully', deletedUser);
         } catch (error) {
             return handleError(res, 400, error.message);
+        }
+    }
+
+    // Login user
+    async login(req, res) {
+        try {
+            const { email, password } = req.body;
+            
+            // Validate input
+            if (!email || !password) {
+                return handleError(res, 400, 'Email and password are required');
+            }
+
+            // Attempt login
+            const loginResult = await UserService.loginUser(email, password);
+
+            return handleResponse(res, 200, 'Login successful', {
+                user: {
+                    id: loginResult.user._id,
+                    username: loginResult.user.username,
+                    email: loginResult.user.email,
+                    role: loginResult.user.role
+                },
+                token: loginResult.token
+            });
+        } catch (error) {
+            return handleError(res, 401, error.message);
         }
     }
 }
