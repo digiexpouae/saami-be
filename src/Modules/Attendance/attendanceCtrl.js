@@ -77,8 +77,9 @@ class AttendanceController {
     async deleteAttendance(req, res) {
         try {
             const attendanceId = req.params.id;
-            await AttendanceService.deleteAttendance(attendanceId);
-            return handleResponse(res, 200, 'Attendance record deleted');
+
+           const deletedRecord = await AttendanceService.deleteAttendance(attendanceId);
+            return handleResponse(res, 200, 'Attendance record deleted', deletedRecord);
         } catch (error) {
             return handleError(res, 400, error.message);
         }

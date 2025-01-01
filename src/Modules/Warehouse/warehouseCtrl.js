@@ -51,8 +51,8 @@ class WarehouseController {
     async deleteWarehouse(req, res) {
         try {
             const warehouseId = req.params.id;
-            await WarehouseService.deleteWarehouse(warehouseId);
-            return handleResponse(res, 200, 'Warehouse deleted successfully');
+            const deletedWarehouse = await WarehouseService.deleteWarehouse(warehouseId);
+            return handleResponse(res, 200, 'Warehouse deleted successfully', deletedWarehouse);
         } catch (error) {
             return handleError(res, 400, error.message);
         }

@@ -15,8 +15,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const activeEnviroment = process.env.NODE_ENV;
+const activeDbString = {
+  local: process.env.MONGODB_LOCAL,
+  test: process.env.MONGODB_TEST,
+  prod: process.env.MONGODB_PROD,
+};
+
+const URI = activeDbString[activeEnviroment];
+
 // Database Connection
-database.connect(process.env.MONGODB_URI);
+database.connect(URI);
 database.setupGracefulShutdown();
 
 // Import Routes

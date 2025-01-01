@@ -1,20 +1,17 @@
-import express from 'express';
-import WarehouseController from './warehouseCtrl.js';
+import express from "express";
+import WarehouseController from "./warehouseCtrl.js";
+import { verifyAdmin } from "../../Utils/authUtils.js";
 
 const router = express.Router();
 
+router.post("/", verifyAdmin, WarehouseController.createWarehouse);
 
-router.post('/', WarehouseController.createWarehouse);
+router.get("/", WarehouseController.getAllWarehouses);
 
+router.get("/:id", WarehouseController.getWarehouseById);
 
-router.get('/', WarehouseController.getAllWarehouses);
+router.put("/:id", verifyAdmin, WarehouseController.updateWarehouse);
 
-
-router.get('/:id', WarehouseController.getWarehouseById);
-
-
-router.put('/:id', WarehouseController.updateWarehouse);
-
-router.delete('/:id', WarehouseController.deleteWarehouse);
+router.delete("/:id", verifyAdmin, WarehouseController.deleteWarehouse);
 
 export default router;

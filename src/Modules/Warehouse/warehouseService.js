@@ -80,7 +80,7 @@ class WarehouseService {
     async deleteWarehouse(warehouseId) {
         const deletedWarehouse = await this.dbService.deleteDocument(
             { _id: warehouseId },
-            false // soft delete
+            true // soft delete
         );
         
         if (!deletedWarehouse) {

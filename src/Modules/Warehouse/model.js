@@ -8,17 +8,23 @@ const WarehouseSchema = new mongoose.Schema({
         trim: true
     },
     location: {
-        type: String,
-        required: true,
-        trim: true
+        latitude: {
+            type: Number,
+            required: true
+        },
+        longitude: {
+            type: Number,
+            required: true
+        }
     },
-    capacity: {
+    totalEmployees: {
         type: Number,
-        required: true
+        default: 0
     },
     managers: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        default: null
     }],
     isActive: {
         type: Boolean,
