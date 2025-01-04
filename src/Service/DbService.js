@@ -1,4 +1,4 @@
-export default class DatabaseService {
+export default class DbService {
     constructor(dbSchema) {
         this.model = dbSchema;
     }
@@ -84,8 +84,11 @@ export default class DatabaseService {
 
     // Delete a document (soft or hard delete)
     async deleteDocument(filter, hardDelete = false) {
+         console.log(hardDelete , filter);
         if (hardDelete) {
             // Permanent deletion
+           
+            
             return await this.model.findOneAndDelete(filter);
         } else {
             // Soft delete
