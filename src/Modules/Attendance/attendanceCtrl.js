@@ -39,7 +39,9 @@ class AttendanceController {
 
     async getAttendanceSummary (req  , res){
         try {
-            const records = await AttendanceService.getAttendanceSummary();
+            const {date} =req.body;
+
+            const records = await AttendanceService.getAttendanceSummary(date);
             return handleResponse(res, 200, "Success", records)
         } catch (error) {
             return handleError(res, 500, error.message)
