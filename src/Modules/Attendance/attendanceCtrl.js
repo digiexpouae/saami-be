@@ -5,11 +5,10 @@ class AttendanceController {
 
     async checkIn(req, res) {
         try {
-            const { user, warehouseId, notes } = req.body;
-            console.log("user inside ctrl", user)
-
-
-            const checkIn = await AttendanceService.checkIn(user, warehouseId, notes);
+            const user = req.body.user;
+            // console.log(user);
+            
+            const checkIn = await AttendanceService.checkIn(user);
             return handleResponse(res, 201, 'Check-in successful', checkIn);
         } catch (error) {
             return handleError(res, 400, error.message);
@@ -19,8 +18,8 @@ class AttendanceController {
 
     async checkOut(req, res) {
         try {
-            const { attendanceId } = req.body;
-            const checkOut = await AttendanceService.checkOut(attendanceId);
+            const user = req.body.user;
+            const checkOut = await AttendanceService.checkOut(user);
             return handleResponse(res, 200, 'Check-out successful', checkOut);
         } catch (error) {
             return handleError(res, 400, error.message);
@@ -30,26 +29,20 @@ class AttendanceController {
 
     async getAttendanceRecords(req, res) {
         try {
-            const {
-                userId,
-                warehouseId,
-                startDate,
-                endDate,
-                page = 1,
-                limit = 10
-            } = req.query;
-
-            const records = await AttendanceService.getAttendanceRecords(
-                userId,
-                warehouseId,
-                startDate,
-                endDate,
-                page,
-                limit
-            );
+          
+            const records = await AttendanceService.getAttendanceRecords();
             return handleResponse(res, 200, 'Attendance records retrieved', records);
         } catch (error) {
             return handleError(res, 500, error.message);
+        }
+    }
+
+    async getAttendanceSummary (req  , res){
+        try {
+            const records = await AttendanceService.getAttendanceSummary();
+            return handleResponse(res, 200, "Success", records)
+        } catch (error) {
+            return handleError(res, 500, error.message)
         }
     }
 
@@ -57,6 +50,8 @@ class AttendanceController {
     async getAttendanceById(req, res) {
         try {
             const attendanceId = req.params.id;
+            console.log(attendanceId);
+            
             const record = await AttendanceService.getAttendanceById(attendanceId);
             return handleResponse(res, 200, 'Attendance record retrieved', record);
         } catch (error) {
@@ -65,28 +60,18 @@ class AttendanceController {
     }
 
 
-    async updateAttendance(req, res) {
+    async getEmployeeAttendanceRecords (req , res){
         try {
-            const attendanceId = req.params.id;
-            const updateData = req.body;
-            const updatedRecord = await AttendanceService.updateAttendance(attendanceId, updateData);
-            return handleResponse(res, 200, 'Attendance record updated', updatedRecord);
+            
+            const employeeId = req.params.id;
+            const records = await AttendanceService.getEmployeeAttendanceRecords(employeeId);
+            return handleResponse(res , 200 ,'Attendance record retrieved',records);
         } catch (error) {
-            return handleError(res, 400, error.message);
+        return handleError(res, 404, error.message);
+
         }
     }
 
-
-    async deleteAttendance(req, res) {
-        try {
-            const attendanceId = req.params.id;
-
-           const deletedRecord = await AttendanceService.deleteAttendance(attendanceId);
-            return handleResponse(res, 200, 'Attendance record deleted', deletedRecord);
-        } catch (error) {
-            return handleError(res, 400, error.message);
-        }
-    }
 }
 
 export default new AttendanceController();

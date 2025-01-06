@@ -7,12 +7,11 @@ router.post('/check-in', AttendanceController.checkIn);
 
 router.post('/check-out', AttendanceController.checkOut);
 
+router.get('/get-summary' , AttendanceController.getAttendanceSummary)
+router.get('/get-summary/:id' , AttendanceController.getEmployeeAttendanceRecords);
 router.get('/', AttendanceController.getAttendanceRecords);
 
 router.get('/:id', AttendanceController.getAttendanceById);
 
-router.put('/:id', AttendanceController.updateAttendance);
-
-router.delete('/:id', AttendanceController.deleteAttendance);
 
 export default router;
