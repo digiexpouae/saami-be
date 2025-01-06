@@ -163,6 +163,8 @@ class UserService {
       email: email.toLowerCase(),
     });
 
+    console.log(user);
+
     // Check if user exists
     if (!user) {
       throw new Error("Invalid email or password");

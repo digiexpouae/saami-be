@@ -4,13 +4,12 @@ class EmployeeOutsideActivityController {
 
   async logActivity(req, res) {
     try {
-      const { employeeId, timeWhenOutside, outsideDuration } = req.body;
+      const { employeeId, timeWhenOutside } = req.body;
       console.log(employeeId , timeWhenOutside);
-      
+
       const activity = await EmployeeOutsideActivityService.logActivity(
         employeeId,
         timeWhenOutside,
-        outsideDuration
       );
 
       res.status(201).json({

@@ -5,8 +5,11 @@ class AttendanceController {
 
     async checkIn(req, res) {
         try {
-            const { userId, warehouseId, notes } = req.body;
-            const checkIn = await AttendanceService.checkIn(userId, warehouseId, notes);
+            const { user, warehouseId, notes } = req.body;
+            console.log("user inside ctrl", user)
+
+
+            const checkIn = await AttendanceService.checkIn(user, warehouseId, notes);
             return handleResponse(res, 201, 'Check-in successful', checkIn);
         } catch (error) {
             return handleError(res, 400, error.message);
@@ -24,24 +27,24 @@ class AttendanceController {
         }
     }
 
- 
+
     async getAttendanceRecords(req, res) {
         try {
-            const { 
-                userId, 
-                warehouseId, 
-                startDate, 
-                endDate, 
-                page = 1, 
-                limit = 10 
+            const {
+                userId,
+                warehouseId,
+                startDate,
+                endDate,
+                page = 1,
+                limit = 10
             } = req.query;
 
             const records = await AttendanceService.getAttendanceRecords(
-                userId, 
-                warehouseId, 
-                startDate, 
-                endDate, 
-                page, 
+                userId,
+                warehouseId,
+                startDate,
+                endDate,
+                page,
                 limit
             );
             return handleResponse(res, 200, 'Attendance records retrieved', records);
@@ -50,7 +53,7 @@ class AttendanceController {
         }
     }
 
-   
+
     async getAttendanceById(req, res) {
         try {
             const attendanceId = req.params.id;

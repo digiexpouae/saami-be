@@ -10,22 +10,27 @@
         "test": "node --experimental-vm-modules node_modules/mocha/bin/mocha test/**/*.test.js",
         "test:watch": "node --experimental-vm-modules node_modules/mocha/bin/mocha test/**/*.test.js --watch"
     },
-    "keywords": ["employee", "tracking", "warehouse"],
+    "keywords": [
+        "employee",
+        "tracking",
+        "warehouse"
+    ],
     "author": "Your Name",
     "license": "ISC",
     "dependencies": {
         "bcryptjs": "^2.4.3",
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
+        "employee-tracker-be": "file:",
         "express": "^4.18.2",
         "jsonwebtoken": "^9.0.2",
         "mongoose": "^7.6.3",
         "validator": "^13.11.0"
     },
     "devDependencies": {
-        "nodemon": "^3.0.1",
+        "chai": "^4.3.7",
         "mocha": "^10.2.0",
-        "chai": "^4.3.7"
+        "nodemon": "^3.0.1"
     },
     "engines": {
         "node": ">=14.0.0"

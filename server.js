@@ -33,11 +33,12 @@ import userRoutes from './src/Modules/User/userRouter.js';
 import warehouseRoutes from './src/Modules/Warehouse/warehouseRouter.js';
 import attendanceRoutes from './src/Modules/Attendance/attendanceRouter.js';
 import employeeOutsideActivityRoute from './src/Modules/EmployeeOutsideActivity/EmployeeOutsideActivityRoute.js'
+import { verifyUser } from './src/Utils/authUtils.js';
 // Use Routes
 app.use('/api/users', userRoutes);
 app.use('/api/warehouses', warehouseRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use("/api/employee-outside-activities", employeeOutsideActivityRoute);
+app.use('/api/attendance',verifyUser, attendanceRoutes);
+app.use("/api/notify", verifyUser, employeeOutsideActivityRoute);
 
 // Error Handling Middleware (to be implemented)
 app.use((err, req, res, next) => {

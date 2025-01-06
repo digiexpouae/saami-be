@@ -9,7 +9,7 @@ class EmployeeOutsideActivityService {
 
 
   async logActivity(employeeId, timeWhenOutside, outsideDuration = 5) {
-    const activity = { employeeId, timeWhenOutside, outsideDuration };
+    const activity = { employeeId, timeWhenOutside };
     return await this.dbService.save(activity);
   }
 
@@ -29,7 +29,7 @@ class EmployeeOutsideActivityService {
     return this.getActivities({ employeeId }, page, limit);
   }
 
- 
+
   async deleteActivity(activityId) {
     const result = await this.dbService.deleteDocument({ _id: activityId},true);
 
@@ -40,14 +40,14 @@ class EmployeeOutsideActivityService {
 
 
 
- 
+
   async getTotalOutsideTimeByEmployee(date, warehouse) {
     console.log(warehouse, date);
 
     const warehouseId = new mongoose.Types.ObjectId(warehouse);
 
     console.log(warehouseId);
-    
+
 
     const startOfDay = new Date(date);
     const endOfDay = new Date(date);
@@ -56,7 +56,7 @@ class EmployeeOutsideActivityService {
 
     const aggregation = [
       {
-  
+
         $match: {
           timeWhenOutside: { $gte: startOfDay, $lte: endOfDay },
         },
@@ -69,7 +69,7 @@ class EmployeeOutsideActivityService {
       },
       {
         $lookup: {
-          from: 'users', 
+          from: 'users',
           localField: '_id',
           foreignField: '_id',
           as: 'employee',
@@ -78,14 +78,14 @@ class EmployeeOutsideActivityService {
       {
         $unwind: '$employee',
       },
-      
+
       {
         $match: {
-          'employee.assignedWarehouse': warehouseId, 
+          'employee.assignedWarehouse': warehouseId,
         },
       },
       {
-        $project: {  
+        $project: {
           employeeId: '$_id',
           totalDuration: 1,
           employeeName: '$employee.username',
@@ -94,7 +94,7 @@ class EmployeeOutsideActivityService {
       },
     ];
 
-    
+
 
     const totalOutsideTime = await EmployeeOutsideActivity.aggregate(aggregation);
 

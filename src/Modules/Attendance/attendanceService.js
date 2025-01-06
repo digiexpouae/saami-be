@@ -19,32 +19,18 @@ class AttendanceService {
      */
     async checkIn(userId, warehouseId, notes = '') {
         // Get the user and warehouse documents
-        const user = await this.userDbService.getDocument({ _id: userId });
-        const warehouse = await this.warehouseDbService.getDocument({ _id: warehouseId });  
+        const user = await User.findOne({ _id: userId.id })
+
         if (!user) {
             throw new Error('User not found');
         }
 
-        if (!warehouse) {
-            throw new Error('Warehouse not found');
-        }
-
-        // Check if the user already has an active check-in
-        const activeCheckIn = await this.dbService.getDocument({
-            user: userId,
-            checkOutTime: null
-        });
-
-        if (activeCheckIn) {
-            throw new Error('User already has an active check-in');
-        }
-
         // Create a new attendance record
         const checkInData = {
-            user: userId,
-            warehouse: warehouseId,
-            checkInTime: new Date(),
-            notes
+          user: user._id,
+          warehouse: user.assignedWarehouse,
+          checkInTime: new Date().toISOString(),
+          notes,
         };
 
         return await this.dbService.save(checkInData);
@@ -57,9 +43,9 @@ class AttendanceService {
      */
     async checkOut(attendanceId) {
         // Get the attendance record
-        const attendance = await this.dbService.getDocument({ 
+        const attendance = await this.dbService.getDocument({
             _id: attendanceId,
-            checkOutTime: null 
+            checkOutTime: null
         });
 
         if (!attendance) {
@@ -69,14 +55,14 @@ class AttendanceService {
         // Update the attendance record with the check-out time and duration
         return await this.dbService.updateDocument(
             { _id: attendanceId },
-            { 
+            {
                 checkOutTime: new Date(),
                 duration: this.calculateDuration(attendance.checkInTime, new Date()),
-                status: 'checked_out'  
+                status: 'checked_out'
             },
-            { 
+            {
                 new: true,
-                populate: ['user', 'warehouse'] 
+                populate: ['user', 'warehouse']
             }
         );
     }
@@ -92,18 +78,18 @@ class AttendanceService {
      * @returns {Promise} The attendance records
      */
     async getAttendanceRecords(
-        userId, 
-        warehouseId, 
-        startDate, 
-        endDate, 
-        page = 1, 
+        userId,
+        warehouseId,
+        startDate,
+        endDate,
+        page = 1,
         limit = 10
     ) {
         const query = {};
 
         if (userId) query.user = userId;
         if (warehouseId) query.warehouse = warehouseId;
-        
+
         if (startDate && endDate) {
             query.checkInTime = {
                 $gte: new Date(startDate),
@@ -147,7 +133,7 @@ class AttendanceService {
         const updatedRecord = await this.dbService.updateDocument(
             { _id: attendanceId },
             updateData,
-            { 
+            {
                 new: true,
                 populate: ['user', 'warehouse']
             }
