@@ -17,20 +17,11 @@ class AttendanceService {
      * @param {string} notes - Optional notes for the check-in
      * @returns {Promise} The newly created attendance record
      */
-    async checkIn(userId, warehouseId, notes = '') {
-        // Get the user and warehouse documents
-        const user = await User.findOne({ _id: userId.id })
-
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        // Create a new attendance record
+    async checkIn(user) {
         const checkInData = {
-          user: user._id,
-          warehouse: user.assignedWarehouse,
-          checkInTime: new Date().toISOString(),
-          notes,
+          user: user.id,
+          time: new Date().toISOString(),
+          status: "checked_in",
         };
 
         return await this.dbService.save(checkInData);
@@ -41,30 +32,14 @@ class AttendanceService {
      * @param {string} attendanceId - ID of the attendance record
      * @returns {Promise} The updated attendance record
      */
-    async checkOut(attendanceId) {
-        // Get the attendance record
-        const attendance = await this.dbService.getDocument({
-            _id: attendanceId,
-            checkOutTime: null
-        });
+    async checkOut(user) {
+        const checkOutData = {
+          user: user.id,
+          time: new Date().toISOString(),
+          status: "checked_out",
+        };
 
-        if (!attendance) {
-            throw new Error('No active check-in found');
-        }
-
-        // Update the attendance record with the check-out time and duration
-        return await this.dbService.updateDocument(
-            { _id: attendanceId },
-            {
-                checkOutTime: new Date(),
-                duration: this.calculateDuration(attendance.checkInTime, new Date()),
-                status: 'checked_out'
-            },
-            {
-                new: true,
-                populate: ['user', 'warehouse']
-            }
-        );
+        return await this.dbService.save(checkOutData);
     }
 
     /**
@@ -77,33 +52,10 @@ class AttendanceService {
      * @param {number} limit - Limit for pagination (optional)
      * @returns {Promise} The attendance records
      */
-    async getAttendanceRecords(
-        userId,
-        warehouseId,
-        startDate,
-        endDate,
-        page = 1,
-        limit = 10
-    ) {
-        const query = {};
 
-        if (userId) query.user = userId;
-        if (warehouseId) query.warehouse = warehouseId;
-
-        if (startDate && endDate) {
-            query.checkInTime = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
-            };
+        async getAttendanceRecords() {
+            return await this.dbService.getAllDocuments();
         }
-
-        return await this.dbService.getAllDocuments(query, {
-            limit,
-            skip: (page - 1) * limit,
-            populate: ['user', 'warehouse'],
-            sort: 'checkInTime'
-        });
-    }
 
     /**
      * Get an attendance record by ID
@@ -113,7 +65,7 @@ class AttendanceService {
     async getAttendanceById(attendanceId) {
         const record = await this.dbService.getDocument(
             { _id: attendanceId },
-            { populate: ['user', 'warehouse'] }
+            { populate: ['user'] }
         );
 
         if (!record) {
@@ -123,76 +75,64 @@ class AttendanceService {
         return record;
     }
 
-    /**
-     * Update an attendance record
-     * @param {string} attendanceId - ID of the attendance record
-     * @param {object} updateData - Data to update
-     * @returns {Promise} The updated attendance record
-     */
-    async updateAttendance(attendanceId, updateData) {
-        const updatedRecord = await this.dbService.updateDocument(
-            { _id: attendanceId },
-            updateData,
-            {
-                new: true,
-                populate: ['user', 'warehouse']
-            }
-        );
+    async getAttendanceSummary() {
+ 
+    const records = await this.dbService.getAllDocuments({});
 
-        if (!updatedRecord) {
-            throw new Error('Attendance record not found');
-        }
+    const employeeData = {};
 
-        return updatedRecord;
-    }
+    records.forEach((record) => {
+        const { user, time, status } = record;
 
-    /**
-     * Delete an attendance record
-     * @param {string} attendanceId - ID of the attendance record
-     * @returns {Promise} The deleted attendance record
-     */
-    async deleteAttendance(attendanceId) {
-        const deletedRecord = await this.dbService.deleteDocument(
-            { _id: attendanceId },
-            true // hard delete
-        );
-
-        if (!deletedRecord) {
-            throw new Error('Attendance record not found');
-        }
-
-        return deletedRecord;
-    }
-
-    calculateDuration(checkInTime, checkOutTime) {
-        // If input is already a number (milliseconds), calculate duration
-        if (typeof checkInTime === 'number' && typeof checkOutTime === 'number') {
-            const duration = checkOutTime - checkInTime;
-            const totalMinutes = Math.floor(duration / (1000 * 60));
-            return totalMinutes;
-        }
-
-        // If input is a string like "0h 4m", parse it
-        if (typeof checkInTime === 'string' && typeof checkOutTime === 'string') {
-            const parseTimeString = (timeStr) => {
-                const hours = parseInt(timeStr.match(/(\d+)h/)?.[1] || '0');
-                const minutes = parseInt(timeStr.match(/(\d+)m/)?.[1] || '0');
-                return hours * 60 + minutes;
+        if (!employeeData[user]) {
+            employeeData[user] = {
+                firstCheckIn: null,
+                lastCheckOut: null,
             };
-
-            return parseTimeString(checkInTime);
         }
 
-        // If input is Date objects
-        if (checkInTime instanceof Date && checkOutTime instanceof Date) {
-            const duration = checkOutTime - checkInTime;
-            const totalMinutes = Math.floor(duration / (1000 * 60));
-            return totalMinutes;
+        if (status === "checked_in") {
+            if (!employeeData[user].firstCheckIn || new Date(time) < new Date(employeeData[user].firstCheckIn)) {
+                employeeData[user].firstCheckIn = time;
+            }
+        } else if (status === "checked_out") {
+            if (!employeeData[user].lastCheckOut || new Date(time) > new Date(employeeData[user].lastCheckOut)) {
+                employeeData[user].lastCheckOut = time;
+            }
         }
+    });
 
-        // If inputs are invalid, return 0
-        return 0;
+    
+    const result = Object.keys(employeeData).map((userId) => {
+        const { firstCheckIn, lastCheckOut } = employeeData[userId];
+
+        const totalDuration =
+            firstCheckIn && lastCheckOut
+                ? (new Date(lastCheckOut) - new Date(firstCheckIn)) / (1000 * 60) 
+                : 0;
+
+        return {
+            userId,
+            firstCheckIn,
+            lastCheckOut,
+            totalDuration: Math.round(totalDuration), 
+        };
+    });
+
+    return result;
+}
+
+
+async getEmployeeAttendanceRecords(employeeId) {
+    
+    if (!employeeId) {
+        throw new Error("Employee ID is required.");
     }
+    console.log(employeeId);
+    const records = await this.dbService.getAllDocuments({ user: employeeId });
+    return records.reverse();;
+}
+
 }
 
 export default new AttendanceService();
