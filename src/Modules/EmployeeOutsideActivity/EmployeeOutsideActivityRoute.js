@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.post("/log", EmployeeOutsideActivityController.logActivity);
 router.get("/", EmployeeOutsideActivityController.getAllActivities);
+router.get("/my-activity", EmployeeOutsideActivityController.getMyActivity)
 router.get("/:employeeId", EmployeeOutsideActivityController.getActivitiesByEmployee);
 router.delete("/:activityId", EmployeeOutsideActivityController.deleteActivity);
 

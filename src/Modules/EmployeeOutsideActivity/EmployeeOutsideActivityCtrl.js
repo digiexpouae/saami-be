@@ -4,12 +4,11 @@ class EmployeeOutsideActivityController {
 
   async logActivity(req, res) {
     try {
-      const { employeeId, timeWhenOutside } = req.body;
-      console.log(employeeId , timeWhenOutside);
+      const { user, eventName } = req.body;
 
       const activity = await EmployeeOutsideActivityService.logActivity(
-        employeeId,
-        timeWhenOutside,
+         user?.id,
+        eventName,
       );
 
       res.status(201).json({
@@ -17,6 +16,30 @@ class EmployeeOutsideActivityController {
         message: "Outside activity logged successfully",
         data: activity,
       });
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async getMyActivity(req, res) {
+    try {
+      const { user } = req.body
+
+      const activities = await EmployeeOutsideActivityService.getMyActivity(user.id);
+
+    return  res.status(200).json({ success: true, data: activities });
+    } catch (error) {
+      console.log(error)
+   res.status(500).json({ success: false, message: error.message });
+
+    }
+  }
+
+  async bulklog(req, res) {
+    try {
+      const {activities, user} = req.body;
+      await EmployeeOutsideActivityService.bulkLog(activities, user.id);
+      res.status(201).json({ success: true, message: "Bulk activities logged successfully" });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
     }
