@@ -141,6 +141,7 @@ async getEmployeeAttendanceRecords(employeeId) {
     }
     console.log(employeeId);
     const records = await this.dbService.getAllDocuments({ user: employeeId });
+    console.log(records);
     return records.reverse();;
 }
 
