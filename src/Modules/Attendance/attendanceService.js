@@ -2,7 +2,7 @@ import Attendance from './model.js';
 import User from '../User/model.js';
 import Warehouse from '../Warehouse/model.js';
 import DbService from '../../Service/DbService.js';
-
+import mongoose from "mongoose";
 class AttendanceService {
     constructor() {
         this.dbService = new DbService(Attendance);
@@ -77,61 +77,135 @@ class AttendanceService {
 
 
 
-    async getAttendanceSummary(date) {
+//     async getAttendanceSummary(date , warehouseId) {
 
- const startDate = new Date(date + "T00:00:00.000Z");
-const endDate = new Date(date + "T23:59:59.999Z");
+//  const startDate = new Date(date + "T00:00:00.000Z");
+// const endDate = new Date(date + "T23:59:59.999Z");
 
 
-    const records = await this.dbService.getAllDocuments({
-         createdAt: {
-            $gte: startDate, 
-            $lt: endDate, 
-        }
-    });
+//     const records = await this.dbService.getAllDocuments({
+//          createdAt: {
+//             $gte: startDate, 
+//             $lt: endDate, 
+//         },
+//     });
 
-    const employeeData = {};
+//     const employeeData = {};
 
-    records.forEach((record) => {
-        const { user, time, status } = record;
+//     records.forEach((record) => {
+//         const { user, time, status } = record;
 
-        if (!employeeData[user]) {
-            employeeData[user] = {
-                firstCheckIn: null,
-                lastCheckOut: null,
-            };
-        }
+//         if (!employeeData[user]) {
+//             employeeData[user] = {
+//                 firstCheckIn: null,
+//                 lastCheckOut: null,
+//             };
+//         }
 
-        if (status === "checked_in") {
-            if (!employeeData[user].firstCheckIn || new Date(time) < new Date(employeeData[user].firstCheckIn)) {
-                employeeData[user].firstCheckIn = time;
-            }
-        } else if (status === "checked_out") {
-            if (!employeeData[user].lastCheckOut || new Date(time) > new Date(employeeData[user].lastCheckOut)) {
-                employeeData[user].lastCheckOut = time;
-            }
-        }
-    });
+//         if (status === "checked_in") {
+//             if (!employeeData[user].firstCheckIn || new Date(time) < new Date(employeeData[user].firstCheckIn)) {
+//                 employeeData[user].firstCheckIn = time;
+//             }
+//         } else if (status === "checked_out") {
+//             if (!employeeData[user].lastCheckOut || new Date(time) > new Date(employeeData[user].lastCheckOut)) {
+//                 employeeData[user].lastCheckOut = time;
+//             }
+//         }
+//     });
 
     
-    const result = Object.keys(employeeData).map((userId) => {
-        const { firstCheckIn, lastCheckOut } = employeeData[userId];
+//     const result = Object.keys(employeeData).map((userId) => {
+//         const { firstCheckIn, lastCheckOut } = employeeData[userId];
 
-        const totalDuration =
-            firstCheckIn && lastCheckOut
-                ? (new Date(lastCheckOut) - new Date(firstCheckIn)) / (1000 * 60) 
-                : 0;
+//         const totalDuration =
+//             firstCheckIn && lastCheckOut
+//                 ? (new Date(lastCheckOut) - new Date(firstCheckIn)) / (1000 * 60) 
+//                 : 0;
 
-        return {
-            userId,
-            firstCheckIn,
-            lastCheckOut,
-            totalDuration: Math.round(totalDuration), 
-        };
-    });
+//         return {
+//             userId,
+//             firstCheckIn,
+//             lastCheckOut,
+//             totalDuration: Math.round(totalDuration), 
+//         };
+//     });
 
-    return result;
+//     return result;
+// }
+
+async getAttendanceSummary(date, warehouse) {
+    const warehouseId = new mongoose.Types.ObjectId(warehouse);
+
+    const startOfDay = new Date(date + "T00:00:00.000Z");
+    const endOfDay = new Date(date + "T23:59:59.999Z");
+
+    // Use MongoDB's aggregate method directly
+    const attendanceSummary = await mongoose.connection.collection('attendances').aggregate([
+        {
+            $match: {
+                createdAt: { $gte: startOfDay, $lte: endOfDay }, // Filter records by date range
+            },
+        },
+        {
+            $lookup: {
+                from: "users", // Join with the users collection
+                localField: "user",
+                foreignField: "_id",
+                as: "userDetails",
+            },
+        },
+        {
+            $unwind: "$userDetails", // Flatten the userDetails array
+        },
+        {
+            $match: {
+                "userDetails.assignedWarehouse": warehouseId, // Filter by warehouseId
+            },
+        },
+        {
+            $group: {
+                _id: "$userDetails._id", // Group by user ID
+                firstCheckIn: {
+                    $min: {
+                        $cond: [{ $eq: ["$status", "checked_in"] }, "$time", null],
+                    },
+                },
+                lastCheckOut: {
+                    $max: {
+                        $cond: [{ $eq: ["$status", "checked_out"] }, "$time", null],
+                    },
+                },
+            },
+        },
+        {
+            $project: {
+                userId: "$_id",
+                firstCheckIn: {
+                    $toDate: "$firstCheckIn", // Ensure firstCheckIn is a Date
+                },
+                lastCheckOut: {
+                    $toDate: "$lastCheckOut", // Ensure lastCheckOut is a Date
+                },
+                totalDuration: {
+                    $round: [
+                        {
+                            $divide: [
+                                { $subtract: [{ $toDate: "$lastCheckOut" }, { $toDate: "$firstCheckIn" }] },
+                                1000 * 60, // Convert milliseconds to minutes
+                            ],
+                        },
+                        0,
+                    ],
+                },
+            },
+        },
+    ]).toArray(); // Convert the cursor to an array
+
+    return attendanceSummary;
 }
+
+
+
 
 
 async getEmployeeAttendanceRecords(employeeId) {
