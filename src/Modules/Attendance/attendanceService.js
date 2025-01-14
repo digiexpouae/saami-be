@@ -79,9 +79,9 @@ class AttendanceService {
 
     async getAttendanceSummary(date) {
 
-   const startDate = new Date(date);
-    const endDate = new Date(startDate);
-    endDate.setHours(23, 59, 59, 999);
+ const startDate = new Date(date + "T00:00:00.000Z");
+const endDate = new Date(date + "T23:59:59.999Z");
+
 
     const records = await this.dbService.getAllDocuments({
          createdAt: {
