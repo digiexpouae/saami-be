@@ -164,7 +164,9 @@ async getAttendanceSummary(date, warehouse) {
         },
         {
             $group: {
-                _id: "$userDetails._id", // Group by user ID
+                _id: "$userDetails._id",
+                username: { $first: "$userDetails.username" },
+                // Group by user ID
                 firstCheckIn: {
                     $min: {
                         $cond: [{ $eq: ["$status", "checked_in"] }, "$time", null],
@@ -180,6 +182,7 @@ async getAttendanceSummary(date, warehouse) {
         {
             $project: {
                 userId: "$_id",
+                username: 1,
                 firstCheckIn: {
                     $toDate: "$firstCheckIn", // Ensure firstCheckIn is a Date
                 },
