@@ -107,6 +107,26 @@ class EmployeeOutsideActivityController {
     }
   }
 
+  async getActivitySummary(req, res) {
+  try {
+    const { employeeId, fromDate, toDate } = req.body;
+
+    if (!employeeId || !fromDate || !toDate) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    const summary = await EmployeeOutsideActivityService.getActivitySummary(employeeId, fromDate, toDate);
+
+    res.status(200).json({
+      success: true,
+      data: summary,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+
 
 }
 

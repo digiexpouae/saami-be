@@ -184,17 +184,17 @@ async getAttendanceSummary(date, warehouse) {
                 userId: "$_id",
                 username: 1,
                 firstCheckIn: {
-                    $toDate: "$firstCheckIn", // Ensure firstCheckIn is a Date
+                    $toDate: "$firstCheckIn",
                 },
                 lastCheckOut: {
-                    $toDate: "$lastCheckOut", // Ensure lastCheckOut is a Date
+                    $toDate: "$lastCheckOut", 
                 },
                 totalDuration: {
                     $round: [
                         {
                             $divide: [
                                 { $subtract: [{ $toDate: "$lastCheckOut" }, { $toDate: "$firstCheckIn" }] },
-                                1000 * 60, // Convert milliseconds to minutes
+                                1000 * 60, 
                             ],
                         },
                         0,

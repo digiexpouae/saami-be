@@ -1,6 +1,7 @@
 import DbService from "../../Service/DbService.js";
 import EmployeeOutsideActivity from "./model.js";
 import mongoose from "mongoose";
+import Attendance from "../Attendance/model.js";
 
 class EmployeeOutsideActivityService {
   constructor() {
@@ -183,6 +184,123 @@ class EmployeeOutsideActivityService {
 
     return totalOutsideTime;
   }
+
+
+  async getActivitySummary(employeeId, fromDate, toDate) {
+  try {
+    const employeeObjectId = new mongoose.Types.ObjectId(employeeId);
+
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+    end.setHours(23, 59, 59, 999);
+
+const pipeline = [
+  {
+    $match: {
+      employeeId: employeeObjectId,
+      createdAt: { $gte: start, $lte: end },
+    },
+  },
+  {
+    $addFields: {
+      dateOnly: {
+        $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+      },
+    },
+  },
+  {
+    $sort: { dateOnly: 1, createdAt: 1 }, 
+  },
+  {
+    $group: {
+      _id: "$dateOnly",
+      activities: { $push: { eventName: "$eventName", createdAt: "$createdAt" } },
+    },
+  },
+  {
+    $project: {
+      _id: 1, // Date
+      timeData: {
+        $reduce: {
+          input: "$activities",
+          initialValue: { lastEvent: null, lastTimestamp: null, insideTime: 0, outsideTime: 0 },
+          in: {
+            $let: {
+              vars: {
+                duration: {
+                  $cond: {
+                    if: { $ne: ["$$value.lastTimestamp", null] },
+                    then: { $subtract: ["$$this.createdAt", "$$value.lastTimestamp"] },
+                    else: 0,
+                  },
+                },
+              },
+              in: {
+                lastEvent: "$$this.eventName",
+                lastTimestamp: "$$this.createdAt",
+                insideTime: {
+                  $add: [
+                    "$$value.insideTime",
+                    { $cond: { if: { $eq: ["$$value.lastEvent", "enter"] }, then: "$$duration", else: 0 } },
+                  ],
+                },
+                outsideTime: {
+                  $add: [
+                    "$$value.outsideTime",
+                    { $cond: { if: { $eq: ["$$value.lastEvent", "exit"] }, then: "$$duration", else: 0 } },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  {
+    $project: {
+      date: "$_id",
+      insideTime: { $divide: ["$timeData.insideTime", 60000] }, 
+      outsideTime: { $divide: ["$timeData.outsideTime", 60000] }, 
+      workingHours: {
+        $divide: [{ $add: ["$timeData.insideTime", "$timeData.outsideTime"] }, 60000], // Total time in minutes
+      },
+    },
+  },
+  {
+    $sort: { date: 1 }, // Sort by date
+  },
+
+  {
+    $group: {
+      _id: null,
+      totalInsideTime: { $sum: "$insideTime" },
+      totalOutsideTime: { $sum: "$outsideTime" },
+      totalWorkingHours: { $sum: "$workingHours" },
+      dailyData: { $push: "$$ROOT" },
+    },
+  },
+  {
+    $project: {
+      _id: 0,
+      totalInsideTime: 1,
+      totalOutsideTime: 1,
+      totalWorkingHours: 1,
+      dailyData: 1,
+    },
+  },
+];
+
+
+    const activitySummary = await EmployeeOutsideActivity.aggregate(pipeline);
+
+    return activitySummary;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
+
+
 }
 
 export default new EmployeeOutsideActivityService();
