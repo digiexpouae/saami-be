@@ -222,6 +222,24 @@ async getEmployeeAttendanceRecords(employeeId) {
     return records.reverse();;
 }
 
+async getAllEmployeeAttendanceRecords() {
+  try {
+    // Fetch attendance records and populate the 'user' field with the 'username' field
+    const records = await this.dbService.getAllDocuments(); // Get attendance records
+    const populatedRecords = await Attendance.find()
+      .populate('user', 'username')  // Populate the 'user' field with the 'username' field
+      .exec();
+    
+    console.log(populatedRecords); // The records will now include the 'username' from the user model
+    
+    return populatedRecords;
+  } catch (error) {
+    console.error("Error fetching attendance records:", error);
+    return { status: 'error', message: 'Error fetching attendance records' };
+  }
+}
+
+
 }
 
 export default new AttendanceService();
