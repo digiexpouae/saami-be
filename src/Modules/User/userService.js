@@ -180,6 +180,7 @@ class UserService {
     if (!isMatch) {
       throw new Error("Invalid email or password");
     }
+    const getUserWarehouse = await Warehouse.find({ _id: user.assignedWarehouse })
 
     // Generate JWT token
     const token = jwt.sign(
@@ -196,8 +197,9 @@ class UserService {
     await User.updateOne({ _id: user._id }, { lastLogin: new Date() });
 
     return {
-      user,
+     user,
       token,
+      warehouse: getUserWarehouse[0]
     };
   }
 }

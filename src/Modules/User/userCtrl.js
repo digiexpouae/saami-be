@@ -77,6 +77,7 @@ class UserController {
           username: loginResult.user.username,
           email: loginResult.user.email,
           role: loginResult.user.role,
+          warehouse: loginResult.warehouse
         },
         token: loginResult.token,
       });
