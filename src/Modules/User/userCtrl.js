@@ -35,6 +35,23 @@ class UserController {
     }
   }
 
+
+  async getUserByToken(req, res) {
+    try {
+      const body = req.body;
+
+      console.log(body.user);
+      const data = await UserService.getUserByToken(body.user.id)
+      return handleResponse(res, 200, "User retrieved successfully", data);
+    } catch (error) {
+      return handleError(res, 500, error);
+
+
+    }
+
+
+  }
+
   // Update user
   async updateUser(req, res) {
     try {

@@ -156,6 +156,18 @@ class UserService {
     return deletedUser;
   }
 
+  async getUserByToken(userId) {
+    // Find user by ID
+    console.log(userId)
+    const user = await User.findOne({ _id: userId }).populate(
+      "assignedWarehouse"
+    );
+    console.log(user)
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  };
   // Login user method
   async loginUser(email, password) {
     // Find user by email
@@ -180,7 +192,9 @@ class UserService {
     if (!isMatch) {
       throw new Error("Invalid email or password");
     }
-    const getUserWarehouse = await Warehouse.find({ _id: user.assignedWarehouse })
+    const getUserWarehouse = await Warehouse.find({
+      _id: user.assignedWarehouse,
+    });
 
     // Generate JWT token
     const token = jwt.sign(
@@ -197,9 +211,9 @@ class UserService {
     await User.updateOne({ _id: user._id }, { lastLogin: new Date() });
 
     return {
-     user,
+      user,
       token,
-      warehouse: getUserWarehouse[0]
+      warehouse: getUserWarehouse[0],
     };
   }
 }
