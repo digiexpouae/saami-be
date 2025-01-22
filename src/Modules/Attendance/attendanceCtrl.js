@@ -84,6 +84,15 @@ class AttendanceController {
         }
     }
 
+    async getAllEmployeeAttendanceRecords(req , res){
+        try {
+            const records = await AttendanceService.getAllEmployeeAttendanceRecords();
+            return handleResponse(res , 200 ,'Attendance record retrieved',records);
+        } catch (error) {
+            return handleError(res, 500, error.message);       
+        } 
+    }
+
 }
 
 export default new AttendanceController();

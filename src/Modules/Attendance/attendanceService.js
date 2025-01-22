@@ -184,17 +184,17 @@ async getAttendanceSummary(date, warehouse) {
                 userId: "$_id",
                 username: 1,
                 firstCheckIn: {
-                    $toDate: "$firstCheckIn", // Ensure firstCheckIn is a Date
+                    $toDate: "$firstCheckIn",
                 },
                 lastCheckOut: {
-                    $toDate: "$lastCheckOut", // Ensure lastCheckOut is a Date
+                    $toDate: "$lastCheckOut", 
                 },
                 totalDuration: {
                     $round: [
                         {
                             $divide: [
                                 { $subtract: [{ $toDate: "$lastCheckOut" }, { $toDate: "$firstCheckIn" }] },
-                                1000 * 60, // Convert milliseconds to minutes
+                                1000 * 60, 
                             ],
                         },
                         0,
@@ -221,6 +221,24 @@ async getEmployeeAttendanceRecords(employeeId) {
     console.log(records);
     return records.reverse();;
 }
+
+async getAllEmployeeAttendanceRecords() {
+  try {
+    // Fetch attendance records and populate the 'user' field with the 'username' field
+    const records = await this.dbService.getAllDocuments(); // Get attendance records
+    const populatedRecords = await Attendance.find()
+      .populate('user', 'username')  // Populate the 'user' field with the 'username' field
+      .exec();
+    
+    console.log(populatedRecords); // The records will now include the 'username' from the user model
+    
+    return populatedRecords;
+  } catch (error) {
+    console.error("Error fetching attendance records:", error);
+    return { status: 'error', message: 'Error fetching attendance records' };
+  }
+}
+
 
 }
 

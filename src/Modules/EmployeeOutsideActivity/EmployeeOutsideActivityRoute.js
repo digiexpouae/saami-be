@@ -11,6 +11,9 @@ router.get("/:employeeId", EmployeeOutsideActivityController.getActivitiesByEmpl
 router.delete("/:activityId", EmployeeOutsideActivityController.deleteActivity);
 
 
+router.post("/activity-summary", EmployeeOutsideActivityController.getActivitySummary);
+
+
 
 router.post('/total-time', EmployeeOutsideActivityController.getTotalOutsideTimeByEmployee);
 

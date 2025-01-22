@@ -12,6 +12,7 @@ router.get('/my-attendance' , AttendanceController.getMyAttendance)
 router.post('/get-summary/:id' , AttendanceController.getEmployeeAttendanceRecords);
 router.get('/', AttendanceController.getAttendanceRecords);
 
+router.get('/get-all',AttendanceController.getAllEmployeeAttendanceRecords);
 router.get('/:id', AttendanceController.getAttendanceById);
 
 
