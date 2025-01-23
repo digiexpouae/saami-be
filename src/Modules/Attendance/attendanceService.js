@@ -18,6 +18,7 @@ class AttendanceService {
      * @returns {Promise} The newly created attendance record
      */
     async checkIn(user) {
+
         const checkInData = {
           user: user.id,
           time: new Date().toISOString(),
@@ -53,8 +54,27 @@ class AttendanceService {
      * @returns {Promise} The attendance records
      */
 
-        async getAttendanceRecords() {
-            return await this.dbService.getAllDocuments();
+    async getAttendanceRecords() {
+    const pipeline = [
+      {
+        $lookup: {
+          from: "users", 
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $match: {
+          "user.role": { $ne: "admin" },
+        },
+      },
+    ];
+
+    return await Attendance.aggregate(pipeline);
         }
 
     /**
@@ -85,8 +105,8 @@ class AttendanceService {
 
 //     const records = await this.dbService.getAllDocuments({
 //          createdAt: {
-//             $gte: startDate, 
-//             $lt: endDate, 
+//             $gte: startDate,
+//             $lt: endDate,
 //         },
 //     });
 
@@ -113,20 +133,20 @@ class AttendanceService {
 //         }
 //     });
 
-    
+
 //     const result = Object.keys(employeeData).map((userId) => {
 //         const { firstCheckIn, lastCheckOut } = employeeData[userId];
 
 //         const totalDuration =
 //             firstCheckIn && lastCheckOut
-//                 ? (new Date(lastCheckOut) - new Date(firstCheckIn)) / (1000 * 60) 
+//                 ? (new Date(lastCheckOut) - new Date(firstCheckIn)) / (1000 * 60)
 //                 : 0;
 
 //         return {
 //             userId,
 //             firstCheckIn,
 //             lastCheckOut,
-//             totalDuration: Math.round(totalDuration), 
+//             totalDuration: Math.round(totalDuration),
 //         };
 //     });
 
@@ -136,6 +156,7 @@ class AttendanceService {
 async getAttendanceSummary(date, warehouse) {
     const warehouseId = new mongoose.Types.ObjectId(warehouse);
 
+    console.log(warehouseId)
     const startOfDay = new Date(date + "T00:00:00.000Z");
     const endOfDay = new Date(date + "T23:59:59.999Z");
 
@@ -204,6 +225,7 @@ async getAttendanceSummary(date, warehouse) {
         },
     ]).toArray(); // Convert the cursor to an array
 
+    console.log(attendanceSummary)
     return attendanceSummary;
 }
 
@@ -212,7 +234,7 @@ async getAttendanceSummary(date, warehouse) {
 
 
 async getEmployeeAttendanceRecords(employeeId) {
-    
+
     if (!employeeId) {
         throw new Error("Employee ID is required.");
     }
