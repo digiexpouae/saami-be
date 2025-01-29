@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import DbService from "../../Service/DbService.js";
 import Warehouse from "../Warehouse/model.js";
 import mongoose, { ObjectId } from "mongoose";
-import Attendance from '../../Modules/Attendance/model.js'
+import Attendance from "../../Modules/Attendance/model.js";
 
 class UserService {
   constructor() {
@@ -159,41 +159,39 @@ class UserService {
 
   async getUserByToken(userId) {
     // Find user by ID
-    console.log(userId)
+    console.log(userId);
     const user = await User.findOne({ _id: userId }).populate(
       "assignedWarehouse"
     );
-    console.log(user)
+    console.log(user);
     if (!user) {
       throw new Error("User not found");
     }
     return user;
-  };
-
+  }
 
   async getCheckinStatus(body) {
     try {
-   const userId  = body.user.id
-   const today = new Date();
-   today.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+      const userId = body.user.id;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set time to the beginning of the day
 
-   const latestAttendance = await Attendance.findOne({
-     user: userId,
-     createdAt: { $gte: today },
-   })
-     .sort({ createdAt: -1 }) // Sort by creation time in descending order (newest first)
-     .limit(1); // Limit to one result
+      const latestAttendance = await Attendance.findOne({
+        user: userId,
+        createdAt: { $gte: today },
+      })
+        .sort({ createdAt: -1 }) // Sort by creation time in descending order (newest first)
+        .limit(1); // Limit to one result
 
-   if (latestAttendance && latestAttendance.status === "checked_in") {
-     return true;
-   } else {
-     return false; // Default to checked_out if no record or checked_out status
-   }
- } catch (error) {
-   console.error("Error getting attendance status:", error);
-   return "error"; // Or handle the error as you see fit
- }
-
+      if (latestAttendance && latestAttendance.status === "checked_in") {
+        return true;
+      } else {
+        return false; // Default to checked_out if no record or checked_out status
+      }
+    } catch (error) {
+      console.error("Error getting attendance status:", error);
+      return "error"; // Or handle the error as you see fit
+    }
   }
   // Login user method
   async loginUser(email, password) {
@@ -242,6 +240,53 @@ class UserService {
       token,
       warehouse: getUserWarehouse[0],
     };
+  }
+
+  calculateDistance(userCoords, warehouseCoords) {
+    const { userLatitude: lat1, userLongitude: lon1 } = userCoords;
+    const { latitude: lat2, longitude: lon2 } = warehouseCoords;
+    if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
+      return -1; // Handle invalid input types
+    }
+
+    const R = 6371; // Radius of the Earth in kilometers
+
+    const radLat1 = (Math.PI / 180) * lat1;
+    const radLon1 = (Math.PI / 180) * lon1;
+    const radLat2 = (Math.PI / 180) * lat2;
+    const radLon2 = (Math.PI / 180) * lon2;
+
+    const dLon = radLon2 - radLon1;
+    const dLat = radLat2 - radLat1;
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(radLat1) * Math.cos(radLat2) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.asin(Math.sqrt(a));
+
+    const distance = R * c;
+
+    return distance;
+  }
+  async getDistance(body) {
+    const { user, userLatitude, userLongitude } = body;
+    if (userLatitude === undefined || userLongitude === undefined) {
+      return false;
+    }
+    const userInfo = await User.findOne({ _id: user.id }).populate(
+      "assignedWarehouse"
+    );
+    if (userInfo) {
+      const { latitude, longitude } = userInfo.assignedWarehouse.location;
+      const distance= this.calculateDistance(
+        { userLatitude, userLongitude },
+        { latitude, longitude }
+      );
+      if (distance > 0.2) return false
+      return true
+    }
+
+    return false;
   }
 }
 

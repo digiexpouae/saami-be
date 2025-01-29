@@ -14,6 +14,7 @@ router.get("/", UserController.getAllUsers);
 router.get("/:id", UserController.getUserById);
 router.post("/token", verifyUser, UserController.getUserByToken);
 router.post("/getCheckinStatus", verifyUser, UserController.getCheckinStatus);
+router.post("/distance", verifyUser, UserController.getDistance);
 
 router.put("/:id", UserController.updateUser);
 

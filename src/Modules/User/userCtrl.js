@@ -140,6 +140,12 @@ class UserController {
     const result = await UserService.getCheckinStatus(body)
     return handleResponse(res,200, '', result)
   }
+
+  async getDistance(req, res) {
+    const body = req.body;
+    const result = await UserService.getDistance(body)
+    return handleResponse(res,200, '', result)
+  }
 }
 
 export default new UserController();
