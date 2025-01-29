@@ -12,7 +12,8 @@ router.post("/admin/login", UserController.adminLogin);
 router.get("/", UserController.getAllUsers);
 
 router.get("/:id", UserController.getUserById);
-router.post("/token",verifyUser,  UserController.getUserByToken);
+router.post("/token", verifyUser, UserController.getUserByToken);
+router.post("/getCheckinStatus", verifyUser, UserController.getCheckinStatus);
 
 router.put("/:id", UserController.updateUser);
 

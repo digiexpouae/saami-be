@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import DbService from "../../Service/DbService.js";
 import Warehouse from "../Warehouse/model.js";
 import mongoose, { ObjectId } from "mongoose";
+import Attendance from '../../Modules/Attendance/model.js'
 
 class UserService {
   constructor() {
@@ -168,6 +169,32 @@ class UserService {
     }
     return user;
   };
+
+
+  async getCheckinStatus(body) {
+    try {
+   const userId  = body.user.id
+   const today = new Date();
+   today.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+
+   const latestAttendance = await Attendance.findOne({
+     user: userId,
+     createdAt: { $gte: today },
+   })
+     .sort({ createdAt: -1 }) // Sort by creation time in descending order (newest first)
+     .limit(1); // Limit to one result
+
+   if (latestAttendance && latestAttendance.status === "checked_in") {
+     return true;
+   } else {
+     return false; // Default to checked_out if no record or checked_out status
+   }
+ } catch (error) {
+   console.error("Error getting attendance status:", error);
+   return "error"; // Or handle the error as you see fit
+ }
+
+  }
   // Login user method
   async loginUser(email, password) {
     // Find user by email
