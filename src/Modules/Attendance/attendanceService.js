@@ -262,6 +262,97 @@ async getAllEmployeeAttendanceRecords() {
 }
 
 
+async getWarehouseEmployeesStatus(warehouseId) {
+    
+    try {
+        const warehouseObjectId = new mongoose.Types.ObjectId(warehouseId);
+        
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        const employeesStatus = await User.aggregate([
+            {
+                $match: { assignedWarehouse: warehouseObjectId }
+            },
+            {
+                $lookup: {
+                    from: "attendances",
+                    localField: "_id",
+                    foreignField: "user",
+                    as: "attendanceRecords"
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    username: 1,
+                    attendanceRecords: {
+                        $filter: {
+                            input: "$attendanceRecords",
+                            as: "record",
+                            cond: {
+                                $and: [
+                                    { $gte: ["$$record.createdAt", startOfDay] },
+                                    { $lte: ["$$record.createdAt", endOfDay] }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $addFields: {
+                    status: {
+                        $switch: {
+                            branches: [
+                                {
+                                    case: { $gt: [{ $size: "$attendanceRecords" }, 0] },
+                                    then: {
+                                        $cond: [
+                                            { 
+                                                $eq: [
+                                                    { $arrayElemAt: ["$attendanceRecords.status", -1] },
+                                                    "checked_in"
+                                                ]
+                                            },
+                                            "Logged In",
+                                            "Logged Out"
+                                        ]
+                                    }
+                                }
+                            ],
+                            default: "Logged Out"
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    username: 1,
+                    status: 1
+                }
+            }
+        ]);
+        
+        const sortedEmployeesStatus = employeesStatus.sort((a, b) => {
+            if (a.status === "Logged In" && b.status !== "Logged In") {
+                return -1; 
+            }
+            if (a.status !== "Logged In" && b.status === "Logged In") {
+                return 1; 
+            }
+            return 0; 
+        });
+
+        return sortedEmployeesStatus;
+    } catch (error) {
+        console.error("Error fetching warehouse employees' status:", error);
+        throw new Error("Error fetching warehouse employees' status");
+    }
+}
 }
 
 export default new AttendanceService();
