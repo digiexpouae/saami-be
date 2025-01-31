@@ -93,6 +93,16 @@ class AttendanceController {
         } 
     }
 
+    async getWarehouseEmployeesStatus(req , res){
+        try {
+            const {warehouseId} = req.body;
+            const records = await AttendanceService.getWarehouseEmployeesStatus(warehouseId);
+            return handleResponse(res , 200 ,'Attendance record retrieved',records);
+            } catch (error) {
+                return handleError(res, 500, error.message);
+         }
+    }
+
 }
 
 export default new AttendanceController();
