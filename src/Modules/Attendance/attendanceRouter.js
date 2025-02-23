@@ -1,5 +1,6 @@
 import express from 'express';
 import AttendanceController from './attendanceCtrl.js';
+import { verifyUser } from '../../Utils/authUtils.js';
 
 const router = express.Router();
 
@@ -7,7 +8,6 @@ router.post('/check-in', AttendanceController.checkIn);
 
 router.post('/check-out', AttendanceController.checkOut);
 
-router.post("/toggle-attendance", AttendanceController.toggleAttendance);
 
 router.post('/get-summary' , AttendanceController.getAttendanceSummary)
 router.get('/my-attendance' , AttendanceController.getMyAttendance)
@@ -18,4 +18,8 @@ router.get('/get-all',AttendanceController.getAllEmployeeAttendanceRecords);
 router.get('/:id', AttendanceController.getAttendanceById);
 router.post('/get-status', AttendanceController.getWarehouseEmployeesStatus);
 
+
+// new updated apis
+router.post("/toggle-attendance",verifyUser, AttendanceController.toggleAttendance);
+router.post("/getCheckinStatus" ,verifyUser,  AttendanceController.getCheckinStatus)
 export default router;

@@ -115,6 +115,16 @@ class AttendanceController {
          }
     }
 
+    async getCheckinStatus(req, res) {
+        try {
+            const user = req.body.user;
+            const checkInStatus = await AttendanceService.getCheckinStatus(user);
+            return handleResponse(res, 200, 'Check-in status retrieved', checkInStatus);
+        } catch (error) {
+            return handleError(res, 400, error.message);
+        }
+    }
+
 }
 
 export default new AttendanceController();
