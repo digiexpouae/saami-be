@@ -353,8 +353,8 @@ class AttendanceService {
 
   async toggleAttendance(data) {
     try {
-      let { userId, userLatitude, userLongitude } = data;
-      userId = new mongoose.Types.ObjectId(userId);
+      let { user, userLatitude, userLongitude } = data;
+    let  userId = new mongoose.Types.ObjectId(user.id);
       const today = moment().startOf("day").toDate();
 
       let attendance = await Attendance.findOne({
@@ -402,10 +402,11 @@ class AttendanceService {
     }
   }
   async getCheckinStatus(userDto) {
-    const { id } = userDto;
-    const attendance = await Attendance.findOne({ user: id }).sort({
-      cratedAt: -1,
-    });
+      let { id } = userDto;
+      console.log(id)
+      id = new mongoose.Types.ObjectId(id);
+    const attendance = await Attendance.findOne({ user: id })
+      console.log(attendance)
     if (!attendance) {
       return false;
     }
