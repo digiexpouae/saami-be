@@ -16,6 +16,6 @@ router.get('/', AttendanceController.getAttendanceRecords);
 
 router.get('/get-all',AttendanceController.getAllEmployeeAttendanceRecords);
 router.get('/:id', AttendanceController.getAttendanceById);
-
+router.post('/get-status', AttendanceController.getWarehouseEmployeesStatus);
 
 export default router;
