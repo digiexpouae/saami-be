@@ -4,6 +4,7 @@ import Warehouse from '../Warehouse/model.js';
 import DbService from '../../Service/DbService.js';
 import mongoose from "mongoose";
 import moment from "moment";
+import { calculateDistance } from '../../Utils/authUtils.js';
 class AttendanceService {
   constructor() {
     this.dbService = new DbService(Attendance);
@@ -353,8 +354,16 @@ class AttendanceService {
 
   async toggleAttendance(data) {
     try {
-      let { user, userLatitude, userLongitude } = data;
-    let  userId = new mongoose.Types.ObjectId(user.id);
+        let { user, userLatitude, userLongitude } = data;
+        if(isNaN(userLatitude) || isNaN(userLongitude)) throw new Error("Please provide location permission")
+    let userId = new mongoose.Types.ObjectId(user.id);
+    const getUser = await User.findOne({ _id: userId }).populate("assignedWarehouse");
+    const warehouseCoords = getUser.assignedWarehouse.location
+    console.log(warehouseCoords);
+    const distance = calculateDistance({ userLatitude, userLongitude }, warehouseCoords);
+
+        console.log(distance);
+    if (distance > 0.2 || distance <0) throw new Error("Distance must be less than 200 metres")
       const today = moment().startOf("day").toDate();
 
       let attendance = await Attendance.findOne({
