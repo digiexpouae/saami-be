@@ -7,19 +7,22 @@ const AttendanceSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    time: {
-      type: String,
+    date: {
+      type: Date,
       required: true,
     },
-    status: {
-      type: String,
-      enum: ["checked_in", "checked_out"],
-      default: "checked_in",
+    sessions: [
+      {
+        checkInTime: Date,
+        checkOutTime: Date,
+      },
+    ],
+    isCheckedIn: {
+      type: Boolean,
+      default: false,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model("Attendance", AttendanceSchema);

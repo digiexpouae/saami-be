@@ -7,7 +7,7 @@ class AttendanceController {
         try {
             const user = req.body.user;
             // console.log(user);
-            
+
             const checkIn = await AttendanceService.checkIn(user);
             return handleResponse(res, 201, 'Check-in successful', checkIn);
         } catch (error) {
@@ -27,9 +27,21 @@ class AttendanceController {
     }
 
 
+    async toggleAttendance(req, res) {
+        try {
+            const bodyDto = req.body
+            const result = await AttendanceService.toggleAttendance(bodyDto)
+            return handleResponse(res, 200, 'Attendance toggled successfully', result);
+
+        } catch (error) {
+            return handleError(res, 400, error.message);
+        }
+    }
+
+
     async getAttendanceRecords(req, res) {
         try {
-          
+
             const records = await AttendanceService.getAttendanceRecords();
             return handleResponse(res, 200, 'Attendance records retrieved', records);
         } catch (error) {
@@ -53,7 +65,7 @@ class AttendanceController {
         try {
             const attendanceId = req.params.id;
             console.log(attendanceId);
-            
+
             const record = await AttendanceService.getAttendanceById(attendanceId);
             return handleResponse(res, 200, 'Attendance record retrieved', record);
         } catch (error) {
@@ -64,7 +76,7 @@ class AttendanceController {
 
     async getEmployeeAttendanceRecords (req , res){
         try {
-            
+
             const employeeId = req.params.id;
             const records = await AttendanceService.getEmployeeAttendanceRecords(employeeId);
             return handleResponse(res , 200 ,'Attendance record retrieved',records);
@@ -80,7 +92,7 @@ class AttendanceController {
             const records = await AttendanceService.getEmployeeAttendanceRecords(user.id);
             return handleResponse(res , 200 ,'Attendance record retrieved',records);
         } catch (error) {
-            
+
         }
     }
 
@@ -89,8 +101,8 @@ class AttendanceController {
             const records = await AttendanceService.getAllEmployeeAttendanceRecords();
             return handleResponse(res , 200 ,'Attendance record retrieved',records);
         } catch (error) {
-            return handleError(res, 500, error.message);       
-        } 
+            return handleError(res, 500, error.message);
+        }
     }
 
 }

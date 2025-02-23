@@ -3,6 +3,7 @@ import User from '../User/model.js';
 import Warehouse from '../Warehouse/model.js';
 import DbService from '../../Service/DbService.js';
 import mongoose from "mongoose";
+import moment from "moment";
 class AttendanceService {
     constructor() {
         this.dbService = new DbService(Attendance);
@@ -58,7 +59,7 @@ class AttendanceService {
     const pipeline = [
       {
         $lookup: {
-          from: "users", 
+          from: "users",
           localField: "user",
           foreignField: "_id",
           as: "user",
@@ -208,14 +209,14 @@ async getAttendanceSummary(date, warehouse) {
                     $toDate: "$firstCheckIn",
                 },
                 lastCheckOut: {
-                    $toDate: "$lastCheckOut", 
+                    $toDate: "$lastCheckOut",
                 },
                 totalDuration: {
                     $round: [
                         {
                             $divide: [
                                 { $subtract: [{ $toDate: "$lastCheckOut" }, { $toDate: "$firstCheckIn" }] },
-                                1000 * 60, 
+                                1000 * 60,
                             ],
                         },
                         0,
@@ -251,15 +252,64 @@ async getAllEmployeeAttendanceRecords() {
     const populatedRecords = await Attendance.find()
       .populate('user', 'username')  // Populate the 'user' field with the 'username' field
       .exec();
-    
+
     console.log(populatedRecords); // The records will now include the 'username' from the user model
-    
+
     return populatedRecords;
   } catch (error) {
     console.error("Error fetching attendance records:", error);
     return { status: 'error', message: 'Error fetching attendance records' };
   }
-}
+    }
+
+    async toggleAttendance(data)   {
+        try {
+            const { userId} = data
+           const today = moment().startOf("day").toDate();
+
+           let attendance = await Attendance.findOne({
+             user: userId,
+             date: today, // Find today's record
+           });
+
+           if (!attendance) {
+             // If no record exists for today, create a new one with first check-in
+             attendance = new Attendance({
+               user: userId,
+               date: today,
+               sessions: [{ checkInTime: new Date(), checkOutTime: null }],
+               isCheckedIn: true,
+             });
+             await attendance.save();
+
+               return attendance
+           }
+
+           // Find last session
+           let lastSession =
+             attendance.sessions[attendance.sessions.length - 1];
+
+           if (attendance.isCheckedIn) {
+             // If currently checked in, update last session with check-out time
+             lastSession.checkOutTime = new Date();
+             attendance.isCheckedIn = false;
+           } else {
+             // If currently checked out, start a new session
+             attendance.sessions.push({
+               checkInTime: new Date(),
+               checkOutTime: null,
+             });
+             attendance.isCheckedIn = true;
+           }
+
+           await attendance.save();
+
+            return attendance
+         } catch (error) {
+
+            throw new Error(error.message)
+         }
+    }
 
 
 }

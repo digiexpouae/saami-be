@@ -7,6 +7,8 @@ router.post('/check-in', AttendanceController.checkIn);
 
 router.post('/check-out', AttendanceController.checkOut);
 
+router.post("/toggle-attendance", AttendanceController.toggleAttendance);
+
 router.post('/get-summary' , AttendanceController.getAttendanceSummary)
 router.get('/my-attendance' , AttendanceController.getMyAttendance)
 router.post('/get-summary/:id' , AttendanceController.getEmployeeAttendanceRecords);
