@@ -1,10 +1,10 @@
-import Attendance from './model.js';
-import User from '../User/model.js';
-import Warehouse from '../Warehouse/model.js';
-import DbService from '../../Service/DbService.js';
+import Attendance from "./model.js";
+import User from "../User/model.js";
+import Warehouse from "../Warehouse/model.js";
+import DbService from "../../Service/DbService.js";
 import mongoose from "mongoose";
-import moment from "moment";
-import { calculateDistance } from '../../Utils/authUtils.js';
+import moment from "moment-timezone";
+import { calculateDistance } from "../../Utils/authUtils.js";
 class AttendanceService {
   constructor() {
     this.dbService = new DbService(Attendance);
@@ -354,16 +354,22 @@ class AttendanceService {
 
   async toggleAttendance(data) {
     try {
-        let { user, userLatitude, userLongitude } = data;
-        if(isNaN(userLatitude) || isNaN(userLongitude)) throw new Error("Please provide location permission")
-    let userId = new mongoose.Types.ObjectId(user.id);
-    const getUser = await User.findOne({ _id: userId }).populate("assignedWarehouse");
-    const warehouseCoords = getUser.assignedWarehouse.location
-    console.log(warehouseCoords);
-    const distance = calculateDistance({ userLatitude, userLongitude }, warehouseCoords);
+      let { user, userLatitude, userLongitude } = data;
+      if (isNaN(userLatitude) || isNaN(userLongitude))
+        throw new Error("Please provide location permission");
+      let userId = new mongoose.Types.ObjectId(user.id);
+      const getUser = await User.findOne({ _id: userId }).populate(
+        "assignedWarehouse"
+      );
+      const warehouseCoords = getUser.assignedWarehouse.location;
+      console.log(warehouseCoords);
+      const distance = calculateDistance(
+        { userLatitude, userLongitude },
+        warehouseCoords
+      );
 
-        console.log(distance);
-    if (distance > 0.2 || distance <0) throw new Error("Distance must be less than 200 metres")
+      if (distance > 0.2 || distance < 0)
+        throw new Error("Distance must be less than 200 metres");
       const today = moment().startOf("day").toDate();
 
       let attendance = await Attendance.findOne({
@@ -372,7 +378,6 @@ class AttendanceService {
       });
 
       if (!attendance) {
-        // If no record exists for today, create a new one with first check-in
         attendance = new Attendance({
           user: userId,
           date: today,
@@ -384,15 +389,12 @@ class AttendanceService {
         return result;
       }
 
-      // Find last session
       let lastSession = attendance.sessions[attendance.sessions.length - 1];
 
       if (attendance.isCheckedIn) {
-        // If currently checked in, update last session with check-out time
         lastSession.checkOutTime = new Date();
         attendance.isCheckedIn = false;
       } else {
-        // If currently checked out, start a new session
         attendance.sessions.push({
           checkInTime: new Date(),
           checkOutTime: null,
@@ -411,15 +413,54 @@ class AttendanceService {
     }
   }
   async getCheckinStatus(userDto) {
-      let { id } = userDto;
-      console.log(id)
-      id = new mongoose.Types.ObjectId(id);
-    const attendance = await Attendance.findOne({ user: id })
-      console.log(attendance)
+    let { id } = userDto;
+    console.log(id);
+    id = new mongoose.Types.ObjectId(id);
+
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    const attendance = await Attendance.findOne({
+      user: id,
+      date: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    console.log("Attendance", attendance);
     if (!attendance) {
       return false;
     }
     return attendance.isCheckedIn;
+  }
+  async getAllEmployeeAttendances(userObj) {
+    const { user, from, to } = userObj;
+    console.log(userObj);
+    let { id } = user;
+    id = new mongoose.Types.ObjectId(id);
+
+    let filter = {};
+    if (from && to) {
+      filter.createdAt = {
+        $gte: moment.tz(from, "Asia/Kolkata").startOf("day").toDate(),
+        $lte: moment.tz(to, "Asia/Kolkata").endOf("day").toDate(),
+      };
+    } else {
+      let sixtyDaysAgo = moment
+        .tz("Asia/Kolkata")
+        .subtract(60, "days")
+        .startOf("day")
+        .toDate();
+      filter.createdAt = { $gte: sixtyDaysAgo };
+    }
+
+    if (user.role?.toLowerCase() !== "admin") {
+      filter.user = id;
+    }
+
+    console.log("Applied Filter:", JSON.stringify(filter, null, 2));
+
+    return await Attendance.find(filter)
+      .populate("user")
+      .sort({ createdAt: -1 });
   }
 }
 

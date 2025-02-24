@@ -69,3 +69,32 @@ export function  calculateDistance(userCoords, warehouseCoords) {
     return distance;
   }
 
+export const groupAndCalculateWorkingHours = (data) => {
+  const userAttendanceMap = {};
+
+  data.forEach((attendance) => {
+    const userId = attendance.user._id;
+    const username = attendance.user.username;
+
+    if (!userAttendanceMap[userId]) {
+      userAttendanceMap[userId] = {
+        userId,
+        username,
+        totalWorkingHours: 0, // Store total time in milliseconds
+        attendanceRecords: [],
+      };
+    }
+
+    let totalTime = 0;
+    attendance.sessions.forEach((session) => {
+      if (session.checkInTime && session.checkOutTime) {
+        const checkIn = new Date(session.checkInTime);
+        const checkOut = new Date(session.checkOutTime);
+        totalTime += checkOut - checkIn; // Difference in milliseconds
+      }
+    });
+
+    userAttendanceMap[userId].totalWorkingHours += totalTime;
+    userAttendanceMap[userId].attendanceRecords.push(attendance);
+  });
+}

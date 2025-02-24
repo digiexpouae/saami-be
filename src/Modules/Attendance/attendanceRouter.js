@@ -21,5 +21,6 @@ router.post('/get-status', AttendanceController.getWarehouseEmployeesStatus);
 
 // new updated apis
 router.post("/toggle-attendance",verifyUser, AttendanceController.toggleAttendance);
-router.post("/getCheckinStatus" ,verifyUser,  AttendanceController.getCheckinStatus)
+router.post("/getCheckinStatus", verifyUser, AttendanceController.getCheckinStatus)
+router.post("/getAllEmployeeAttendances",verifyUser, AttendanceController.getAllEmployeeAttendances)
 export default router;
