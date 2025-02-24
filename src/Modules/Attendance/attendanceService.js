@@ -263,89 +263,134 @@ class AttendanceService {
 
   async getWarehouseEmployeesStatus(warehouseId) {
     try {
-      const warehouseObjectId = new mongoose.Types.ObjectId(warehouseId);
+      const employees = await User.find({
+        assignedWarehouse: warehouseId,
+      }).select("-password");
+      if (employees.length === 0) {
+        throw new Error("No employees data exists in this warehouse");
+      }
 
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date();
       endOfDay.setHours(23, 59, 59, 999);
 
-      const employeesStatus = await User.aggregate([
+      // Aggregation pipeline
+      const result = await User.aggregate([
         {
-          $match: { assignedWarehouse: warehouseObjectId },
+          $match: {
+            assignedWarehouse: new mongoose.Types.ObjectId(warehouseId),
+            role: {$in : ["employee", "warehouse_manager"]}
+          },
         },
         {
           $lookup: {
             from: "attendances",
             localField: "_id",
             foreignField: "user",
-            as: "attendanceRecords",
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            username: 1,
-            attendanceRecords: {
-              $filter: {
-                input: "$attendanceRecords",
-                as: "record",
-                cond: {
-                  $and: [
-                    { $gte: ["$$record.createdAt", startOfDay] },
-                    { $lte: ["$$record.createdAt", endOfDay] },
-                  ],
+            as: "attendance",
+            pipeline: [
+              {
+                $match: {
+                  date: { $gte: startOfDay, $lte: endOfDay },
                 },
               },
-            },
-          },
-        },
-        {
-          $addFields: {
-            status: {
-              $switch: {
-                branches: [
-                  {
-                    case: { $gt: [{ $size: "$attendanceRecords" }, 0] },
-                    then: {
-                      $cond: [
-                        {
-                          $eq: [
-                            { $arrayElemAt: ["$attendanceRecords.status", -1] },
-                            "checked_in",
-                          ],
-                        },
-                        "Logged In",
-                        "Logged Out",
-                      ],
-                    },
-                  },
-                ],
-                default: "Logged Out",
-              },
-            },
+              { $sort: { createdAt: -1 } }, // Sort by latest record
+              { $limit: 1 }, // Get only the most recent one
+            ],
           },
         },
         {
           $project: {
             _id: 1,
             username: 1,
-            status: 1,
+            email: 1,
+            isCheckedIn: {
+              $ifNull: [
+                { $arrayElemAt: ["$attendance.isCheckedIn", 0] },
+                false,
+              ],
+            },
           },
         },
       ]);
 
-      const sortedEmployeesStatus = employeesStatus.sort((a, b) => {
-        if (a.status === "Logged In" && b.status !== "Logged In") {
-          return -1;
-        }
-        if (a.status !== "Logged In" && b.status === "Logged In") {
-          return 1;
-        }
-        return 0;
-      });
+      // const employeesStatus = await User.aggregate([
+      //   {
+      //     $match: { assignedWarehouse: warehouseObjectId },
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: "attendances",
+      //       localField: "_id",
+      //       foreignField: "user",
+      //       as: "attendanceRecords",
+      //     },
+      //   },
+      //   {
+      //     $project: {
+      //       _id: 1,
+      //       username: 1,
+      //       attendanceRecords: {
+      //         $filter: {
+      //           input: "$attendanceRecords",
+      //           as: "record",
+      //           cond: {
+      //             $and: [
+      //               { $gte: ["$$record.createdAt", startOfDay] },
+      //               { $lte: ["$$record.createdAt", endOfDay] },
+      //             ],
+      //           },
+      //         },
+      //       },
+      //     },
+      //   },
+      //   {
+      //     $addFields: {
+      //       status: {
+      //         $switch: {
+      //           branches: [
+      //             {
+      //               case: { $gt: [{ $size: "$attendanceRecords" }, 0] },
+      //               then: {
+      //                 $cond: [
+      //                   {
+      //                     $eq: [
+      //                       { $arrayElemAt: ["$attendanceRecords.status", -1] },
+      //                       "checked_in",
+      //                     ],
+      //                   },
+      //                   "Logged In",
+      //                   "Logged Out",
+      //                 ],
+      //               },
+      //             },
+      //           ],
+      //           default: "Logged Out",
+      //         },
+      //       },
+      //     },
+      //   },
+      //   {
+      //     $project: {
+      //       _id: 1,
+      //       username: 1,
+      //       status: 1,
+      //     },
+      //   },
+      // ]);
 
-      return sortedEmployeesStatus;
+      // const sortedEmployeesStatus = employeesStatus.sort((a, b) => {
+      //   if (a.status === "Logged In" && b.status !== "Logged In") {
+      //     return -1;
+      //   }
+      //   if (a.status !== "Logged In" && b.status === "Logged In") {
+      //     return 1;
+      //   }
+      //   return 0;
+      // });
+
+      return result;
     } catch (error) {
       console.error("Error fetching warehouse employees' status:", error);
       throw new Error("Error fetching warehouse employees' status");

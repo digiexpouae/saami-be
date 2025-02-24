@@ -16,10 +16,10 @@ router.get('/', AttendanceController.getAttendanceRecords);
 
 router.get('/get-all',AttendanceController.getAllEmployeeAttendanceRecords);
 router.get('/:id', AttendanceController.getAttendanceById);
-router.post('/get-status', AttendanceController.getWarehouseEmployeesStatus);
 
 
 // new updated apis
+router.post('/get-status', AttendanceController.getWarehouseEmployeesStatus);
 router.post("/toggle-attendance",verifyUser, AttendanceController.toggleAttendance);
 router.post("/getCheckinStatus", verifyUser, AttendanceController.getCheckinStatus)
 router.post("/getAllEmployeeAttendances",verifyUser, AttendanceController.getAllEmployeeAttendances)
