@@ -408,7 +408,6 @@ class AttendanceService {
         "assignedWarehouse"
       );
       const warehouseCoords = getUser.assignedWarehouse.location;
-      console.log(warehouseCoords);
       const distance = calculateDistance(
         { userLatitude, userLongitude },
         warehouseCoords
@@ -436,7 +435,8 @@ class AttendanceService {
       }
 
       let lastSession = attendance.sessions[attendance.sessions.length - 1];
-      const admin = User.findOne({ role: "admin" });
+      const admin = await User.findOne({ role: "admin" });
+      console.log("TOGGLE CHECKED:ADMIN" , admin)
 
       if (attendance.isCheckedIn) {
         lastSession.checkOutTime = new Date();

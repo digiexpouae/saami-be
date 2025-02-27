@@ -3,7 +3,7 @@ const expo = new Expo();
 
 export const sendPushNotification = async (message, notificationToken) => {
   try {
-    if (notificationToken) {
+    if (!notificationToken) {
       console.log("No admin push token found!");
       return;
     }
