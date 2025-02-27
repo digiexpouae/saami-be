@@ -15,7 +15,7 @@ router.get("/:id", UserController.getUserById);
 router.post("/token", verifyUser, UserController.getUserByToken);
 router.post("/getCheckinStatus", verifyUser, UserController.getCheckinStatus);
 router.post("/distance", verifyUser, UserController.getDistance);
-
+router.post("/register-token", verifyUser, UserController.registerNotificationToken)
 router.put("/:id", UserController.updateUser);
 
 router.delete("/:id", UserController.deleteUser);

@@ -170,6 +170,22 @@ class UserService {
     return user;
   }
 
+  async registerNotificationToken(data) {
+    const { user, appToken } = data;
+    console.log("ADMIN APP TOKEN: " + appToken);
+    if (user.role !== "admin") {
+      return;
+    }
+    await User.findByIdAndUpdate(
+      user._id,
+      {
+        appToken: appToken,
+      },
+      { new: true }
+    );
+    return;
+  }
+
   async getCheckinStatus(body) {
     try {
       const userId = body.user.id;
@@ -278,12 +294,12 @@ class UserService {
     );
     if (userInfo) {
       const { latitude, longitude } = userInfo.assignedWarehouse.location;
-      const distance= this.calculateDistance(
+      const distance = this.calculateDistance(
         { userLatitude, userLongitude },
         { latitude, longitude }
       );
-      if (distance > 0.2) return false
-      return true
+      if (distance > 0.2) return false;
+      return true;
     }
 
     return false;

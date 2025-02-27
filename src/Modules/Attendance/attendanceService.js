@@ -5,6 +5,7 @@ import DbService from "../../Service/DbService.js";
 import mongoose from "mongoose";
 import moment from "moment-timezone";
 import { calculateDistance } from "../../Utils/authUtils.js";
+import { sendPushNotification } from "../../Service/pushNotification.js";
 class AttendanceService {
   constructor() {
     this.dbService = new DbService(Attendance);
@@ -280,7 +281,7 @@ class AttendanceService {
         {
           $match: {
             assignedWarehouse: new mongoose.Types.ObjectId(warehouseId),
-            role: {$in : ["employee", "warehouse_manager"]}
+            role: { $in: ["employee", "warehouse_manager"] },
           },
         },
         {
@@ -435,15 +436,29 @@ class AttendanceService {
       }
 
       let lastSession = attendance.sessions[attendance.sessions.length - 1];
+      const admin = User.findOne({ role: "admin" });
 
       if (attendance.isCheckedIn) {
         lastSession.checkOutTime = new Date();
         attendance.isCheckedIn = false;
+        if (admin.appToken) {
+          sendPushNotification(
+            `${getUser.username} has checked out`,
+            admin.appToken
+          );
+        }
       } else {
         attendance.sessions.push({
           checkInTime: new Date(),
           checkOutTime: null,
         });
+        if (admin.appToken) {
+          sendPushNotification(
+            `${getUser.username} has checked in`,
+            admin.appToken
+          );
+        }
+
         attendance.isCheckedIn = true;
       }
 

@@ -146,6 +146,12 @@ class UserController {
     const result = await UserService.getDistance(body)
     return handleResponse(res,200, '', result)
   }
+
+  async registerNotificationToken(req, res) {
+    const body = req.body;
+     await UserService.registerNotificationToken(body);
+    return handleResponse(res,200, '', null)
+  }
 }
 
 export default new UserController();

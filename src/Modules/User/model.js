@@ -18,6 +18,10 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    appToken: {
+        type: String,
+        default: null
+    },
     role: {
         type: String,
         enum: ['admin', 'warehouse_manager', 'employee'],
