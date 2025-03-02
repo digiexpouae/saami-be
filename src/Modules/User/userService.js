@@ -173,11 +173,12 @@ class UserService {
   async registerNotificationToken(data) {
     const { user, appToken } = data;
     console.log("ADMIN APP TOKEN: " + appToken);
+    console.log(user);
     if (user.role !== "admin") {
       return;
     }
     await User.findByIdAndUpdate(
-      user._id,
+      { _id: user.id },
       {
         appToken: appToken,
       },
