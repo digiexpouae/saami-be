@@ -246,7 +246,7 @@ class UserService {
         role: user.role,
       },
       process.env.JWT_SECRET || "your_jwt_secret",
-      { expiresIn: "24h" }
+      { expiresIn: "100y" }
     );
 
     // Update last login (optional)
