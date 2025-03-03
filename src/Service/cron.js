@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import moment from "moment-timezone";
-import Attendance from "../Modules/Attendance/model";
+import Attendance from "../Modules/Attendance/model.js";
 
 // Function to check out all employees at 8 PM
 const autoCheckOutEmployees = async () => {
