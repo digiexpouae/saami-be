@@ -16,7 +16,7 @@ export const sendPushNotification = async (message, notificationToken) => {
       {
         to: notificationToken,
         sound: "default",
-        title: "New User Login",
+        title: "Employee Activity",
         body: message,
         data: { extraData: "Some data" },
       },

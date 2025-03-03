@@ -470,18 +470,19 @@ class AttendanceService {
           checkInTime: new Date(),
           checkOutTime: null,
         });
+        attendance.isCheckedIn = true;
+
              if (admin.length > 0) {
                for (let item of admin) {
                  if (item.appToken) {
                    sendPushNotification(
-                     `${getUser.username} has checked out`,
+                     `${getUser.username} has checked in`,
                      item.appToken
                    );
                  }
                }
              }
 
-        attendance.isCheckedIn = true;
       }
 
       const savedAttendance = await attendance.save();
