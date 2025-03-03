@@ -437,7 +437,7 @@ class AttendanceService {
               if (item.appToken) {
                 sendPushNotification(
                   `${getUser.username} has checked out`,
-                  admin.appToken
+                  item.appToken
                 );
               }
             }
@@ -459,7 +459,7 @@ class AttendanceService {
 
               sendPushNotification(
                 `${getUser.username} has checked out`,
-                admin.appToken
+                item.appToken
               );
             }
            }
@@ -475,7 +475,7 @@ class AttendanceService {
                  if (item.appToken) {
                    sendPushNotification(
                      `${getUser.username} has checked out`,
-                     admin.appToken
+                     item.appToken
                    );
                  }
                }
