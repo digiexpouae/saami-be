@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import moment from "moment-timezone";
-import Attendance from "./models/Attendance.js";
+import Attendance from "../Modules/Attendance/model";
 
 // Function to check out all employees at 8 PM
 const autoCheckOutEmployees = async () => {
@@ -9,7 +9,7 @@ const autoCheckOutEmployees = async () => {
       const defaultCheckoutTime = moment().tz("Asia/Kolkata").toDate();
     const employees = await Attendance.find({
       date: today,
-      isCheckedIn: true, 
+      isCheckedIn: true,
     }).populate("user");
 
     if (!employees.length) return console.log("No employees to check out.");
