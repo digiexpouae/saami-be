@@ -415,6 +415,8 @@ class AttendanceService {
 
       if (distance > 0.2 || distance < 0)
         throw new Error("Distance must be less than 200 metres");
+        const admin = await User.find({ role: "admin" });
+        console.log("TOGGLE CHECKED:ADMIN", admin);
       const today = moment().startOf("day").toDate();
 
       let attendance = await Attendance.findOne({
@@ -430,34 +432,54 @@ class AttendanceService {
           isCheckedIn: true,
         });
         const result = (await attendance.save()).populate("user");
+          if (admin.length > 0) {
+            for (let item of admin) {
+              if (item.appToken) {
+                sendPushNotification(
+                  `${getUser.username} has checked out`,
+                  admin.appToken
+                );
+              }
+            }
+          }
+
 
         return result;
       }
 
       let lastSession = attendance.sessions[attendance.sessions.length - 1];
-      const admin = await User.findOne({ role: "admin" });
-      console.log("TOGGLE CHECKED:ADMIN" , admin)
+
 
       if (attendance.isCheckedIn) {
         lastSession.checkOutTime = new Date();
         attendance.isCheckedIn = false;
-        if (admin.appToken) {
-          sendPushNotification(
-            `${getUser.username} has checked out`,
-            admin.appToken
-          );
+        if (admin.length > 0) {
+          for (let item of admin) {
+            if (item.appToken) {
+
+              sendPushNotification(
+                `${getUser.username} has checked out`,
+                admin.appToken
+              );
+            }
+           }
+
         }
       } else {
         attendance.sessions.push({
           checkInTime: new Date(),
           checkOutTime: null,
         });
-        if (admin.appToken) {
-          sendPushNotification(
-            `${getUser.username} has checked in`,
-            admin.appToken
-          );
-        }
+             if (admin.length > 0) {
+               for (let item of admin) {
+                 if (item.appToken) {
+                   sendPushNotification(
+                     `${getUser.username} has checked out`,
+                     admin.appToken
+                   );
+                 }
+               }
+             }
 
         attendance.isCheckedIn = true;
       }

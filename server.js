@@ -51,6 +51,7 @@ import warehouseRoutes from "./src/Modules/Warehouse/warehouseRouter.js";
 import attendanceRoutes from "./src/Modules/Attendance/attendanceRouter.js";
 import employeeOutsideActivityRoute from "./src/Modules/EmployeeOutsideActivity/EmployeeOutsideActivityRoute.js";
 import { verifyUser } from "./src/Utils/authUtils.js";
+import { executeAutoCheckoutCron } from "./src/Service/cron.js";
 // Use Routes
 app.use("/api/users", userRoutes);
 app.use("/api/warehouses", warehouseRoutes);
@@ -68,6 +69,10 @@ app.use((err, req, res, next) => {
 
 // Start Server
 const PORT = process.env.PORT || 5000;
+
+
+executeAutoCheckoutCron();
+
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
