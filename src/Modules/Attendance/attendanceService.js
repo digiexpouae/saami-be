@@ -515,10 +515,8 @@ class AttendanceService {
     return attendance.isCheckedIn;
   }
   async getAllEmployeeAttendances(userObj) {
-    const { user, from, to } = userObj;
-    console.log(userObj);
-    let { id } = user;
-    id = new mongoose.Types.ObjectId(id);
+    const { user, from, to , userId} = userObj;
+ const id = new mongoose.Types.ObjectId(userId);
 
     let filter = {};
     if (from && to) {
